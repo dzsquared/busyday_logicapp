@@ -1,0 +1,245 @@
+{
+    "$connections": {
+        "value": {
+            "office365": {
+                "connectionId": "", 
+                "connectionName": "office365",
+                "id": "" 
+            }
+        }
+    },
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Initialize_variable": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "hourstoadd",
+                            "type": "Integer",
+                            "value": 2
+                        }
+                    ]
+                },
+                "runAfter": {},
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_2": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "hoursplus19",
+                            "type": "Integer",
+                            "value": 21
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_3": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_3": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "hourstoaddTZ",
+                            "type": "Integer",
+                            "value": -4
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_4": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "hoursplus19TZ",
+                            "type": "Integer",
+                            "value": 15
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_2": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Until": {
+                "actions": {
+                    "Condition": {
+                        "actions": {
+                            "Create_event_(V2)": {
+                                "inputs": {
+                                    "body": {
+                                        "End": "@{addHours(utcNow(),variables('hoursplus19TZ'))}",
+                                        "IsAllDay": true,
+                                        "ShowAs": "Tentative",
+                                        "Start": "@{addHours(utcNow(),variables('hourstoaddTZ'))}",
+                                        "Subject": "Day is Full",
+                                        "TimeZone": "(UTC-06:00) Central Time (US & Canada)"
+                                    },
+                                    "host": {
+                                        "connection": {
+                                            "name": "@parameters('$connections')['office365']['connectionId']"
+                                        }
+                                    },
+                                    "method": "post",
+                                    "path": "/datasets/calendars/v2/tables/@{encodeURIComponent(encodeURIComponent('AQMkADQ3Zjg0MzAwAC0wM2JkLTQwZTctYTkxMC03MjY3MTY0ZmM0ODkARgAAA8a3BSvju6VEpL8yL4K7pboHAO_VZFnwyuBOpgtdrlG7ijsAAAIBBwAAAO_VZFnwyuBOpgtdrlG7ijsAAAIFFAAAAA=='))}/items"
+                                },
+                                "runAfter": {},
+                                "type": "ApiConnection"
+                            }
+                        },
+                        "expression": {
+                            "and": [
+                                {
+                                    "greaterOrEquals": [
+                                        "@length(body('Get_calendar_view_of_events_(V2)')?['value'])",
+                                        4
+                                    ]
+                                },
+                                {
+                                    "not": {
+                                        "equals": [
+                                            "@length(body('Filter_array'))",
+                                            1
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "runAfter": {
+                            "Filter_array": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "If"
+                    },
+                    "Filter_array": {
+                        "inputs": {
+                            "from": "@body('Get_calendar_view_of_events_(V2)')?['value']",
+                            "where": "@equals(item()?['Subject'], 'Day is Full')"
+                        },
+                        "runAfter": {
+                            "Get_calendar_view_of_events_(V2)": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Query"
+                    },
+                    "Get_calendar_view_of_events_(V2)": {
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['office365']['connectionId']"
+                                }
+                            },
+                            "method": "get",
+                            "path": "/datasets/calendars/v2/tables/items/calendarview",
+                            "queries": {
+                                "calendarId": "",
+                                "endDateTimeOffset": "@{addHours(utcNow(),variables('hoursplus19'))}",
+                                "startDateTimeOffset": "@{addHours(utcNow(),variables('hourstoadd'))}"
+                            }
+                        },
+                        "runAfter": {},
+                        "type": "ApiConnection"
+                    },
+                    "Increment_variable": {
+                        "inputs": {
+                            "name": "hoursplus19",
+                            "value": 24
+                        },
+                        "runAfter": {
+                            "Increment_variable_4": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "IncrementVariable"
+                    },
+                    "Increment_variable_2": {
+                        "inputs": {
+                            "name": "hourstoadd",
+                            "value": 24
+                        },
+                        "runAfter": {
+                            "Condition": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "IncrementVariable"
+                    },
+                    "Increment_variable_3": {
+                        "inputs": {
+                            "name": "hourstoaddTZ",
+                            "value": 24
+                        },
+                        "runAfter": {
+                            "Increment_variable_2": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "IncrementVariable"
+                    },
+                    "Increment_variable_4": {
+                        "inputs": {
+                            "name": "hoursplus19TZ",
+                            "value": 24
+                        },
+                        "runAfter": {
+                            "Increment_variable_3": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "IncrementVariable"
+                    }
+                },
+                "expression": "@greater(variables('hourstoadd'), 120)",
+                "limit": {
+                    "count": 60,
+                    "timeout": "PT1H"
+                },
+                "runAfter": {
+                    "Initialize_variable_4": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Until"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "triggers": {
+            "Recurrence": {
+                "recurrence": {
+                    "frequency": "Day",
+                    "interval": 1,
+                    "schedule": {
+                        "hours": [
+                            23
+                        ]
+                    },
+                    "timeZone": "Central Standard Time"
+                },
+                "type": "Recurrence"
+            }
+        }
+    }
+}
